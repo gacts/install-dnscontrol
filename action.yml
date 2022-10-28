@@ -1,0 +1,24 @@
+name: Install DNSControl (cross-platform)
+description: Installs DNSControl file into your actions workflow
+
+inputs:
+  version:
+    description: DNSControl version
+    required: true
+    default: latest
+  github-token:
+    description: GitHub auth token. Since there's a default, this is typically not supplied by the user
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  dnscontrol-bin:
+    description: Path to the DNSControl binary file
+
+runs:
+  using: node16
+  main: dist/index.js
+
+branding:
+  icon: arrow-down
+  color: green
