@@ -109,4 +109,4 @@ jobs:
         with:
           version: ${{ matrix.version }}
 
-      - run: dnscontrol --version
+      - run: dnscontrol version
