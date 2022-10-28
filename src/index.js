@@ -135,7 +135,7 @@ function getDNSControlURI(platform, arch, version) {
 
     case 'darwin': {
       switch (arch) {
-        case 'arm64':
+        case 'x64':
           return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol-Darwin`
       }
 
