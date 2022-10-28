@@ -6,6 +6,7 @@ const cache = require('@actions/cache') // docs: https://github.com/actions/tool
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
 const path = require('path')
 const os = require('os')
+const fs = require('fs/promises')
 
 // read action inputs
 const input = {
