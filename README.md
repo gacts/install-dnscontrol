@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: gacts/install-dnscontrol@v1
         #with:
-        #  version: 1.2.0 # `latest` by default, but you can set a specific version to install, e.g.: `3.20.0`
+        #  version: 3.20.0 # `latest` by default, but you can set a specific version to install
 
       - run: dnscontrol version # any dnscontrol command can be executed
 ```
@@ -37,9 +37,9 @@ Following inputs can be used as `step.with` keys:
 
 ### Outputs
 
-| Name               |   Type   | Description                          |
-|--------------------|:--------:|--------------------------------------|
-| `  dnscontrol-bin` | `string` | Path to the   dnscontrol binary file |
+| Name             |   Type   | Description                        |
+|------------------|:--------:|------------------------------------|
+| `dnscontrol-bin` | `string` | Path to the dnscontrol binary file |
 
 ## Releasing
 
