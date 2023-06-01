@@ -4,7 +4,7 @@
 [![Build Status][badge_build]][link_build]
 [![License][badge_license]][link_license]
 
-This action installs [DNSControl][dnscontrol] as a binary file into your workflow. It can be run on **Linux** (`ubuntu-latest`) or **macOS** (`macos-latest`).
+This action installs [DNSControl][dnscontrol] as a binary file into your workflow. It can be run on **Linux** (`ubuntu-latest`), **macOS** (`macos-latest`) or **windows** (`windows-latest`).
 
 - 🚀 DNSControl releases page: <https://github.com/StackExchange/dnscontrol/releases>
 
@@ -15,7 +15,7 @@ Additionally, this action uses GitHub **caching mechanism** to speed up your wor
 ```yaml
 jobs:
   install-dnscontrol:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: gacts/install-dnscontrol@v1
         #with:

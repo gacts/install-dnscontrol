@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog][keepachangelog] and this project adher
 
 - Binary files downloading links
 
+### Added
+
+- Windows is supported now
+
+### Changed
+
+- The minimal dnscontrol version to install is `3.19.0` for now
+
 ## v1.0.1
 
 ### Changed
