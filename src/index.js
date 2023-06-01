@@ -127,7 +127,10 @@ function getDNSControlURI(platform, arch, version) {
     case 'linux': {
       switch (arch) {
         case 'x64': // Amd64
-          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol-Linux`
+          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol_${version}_linux_amd64.tar.gz`
+
+        case 'arm': // Arm
+          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol_${version}_linux_arm64.tar.gz`
       }
 
       throw new Error('Unsupported linux architecture')
@@ -135,8 +138,9 @@ function getDNSControlURI(platform, arch, version) {
 
     case 'darwin': {
       switch (arch) {
-        case 'x64':
-          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol-Darwin`
+        case 'x64': // Amd64
+        case 'arm': // Arm
+          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol_${version}_darwin_all.tar.gz`
       }
 
       throw new Error('Unsupported MacOS architecture')
