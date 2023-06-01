@@ -66,11 +66,13 @@ async function doInstall(version) {
       case distUri.endsWith('tar.gz'):
         await tc.extractTar(distPath, pathToUnpack)
         await io.rmRF(distPath)
-        await io.mv(path.join(pathToUnpack, `dnscontrol-${version}`), pathToInstall)
+        await io.mv(path.join(pathToUnpack, `dnscontrol`), pathToInstall)
         break
 
       case distUri.endsWith('zip'):
-        await tc.extractZip(distPath, pathToInstall)
+        await tc.extractZip(distPath, pathToUnpack)
+        await io.rmRF(distPath)
+        await io.mv(path.join(pathToUnpack, `dnscontrol.exe`), pathToInstall)
         break
 
       default:
