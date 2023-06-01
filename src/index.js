@@ -6,7 +6,6 @@ const cache = require('@actions/cache') // docs: https://github.com/actions/tool
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
 const path = require('path')
 const os = require('os')
-const fs = require('fs/promises')
 
 // read action inputs
 const input = {
@@ -59,12 +58,25 @@ async function doInstall(version) {
     core.info(`👌 DNSControl restored from cache`)
   } else { // cache MISS
     const distUri = getDNSControlURI(process.platform, process.arch, version)
-    const distPath = await tc.downloadTool(distUri, path.join(os.tmpdir(), `dnscontrol.tmp`))
-    const binPath = path.join(pathToInstall, 'dnscontrol')
+    const distPath = await tc.downloadTool(distUri)
+    const pathToUnpack = path.join(os.tmpdir(), `dnscontrol.tmp`)
 
-    await io.mkdirP(pathToInstall)
-    await io.mv(distPath, binPath)
-    await fs.chmod(binPath, 0o755)
+    switch (true) {
+      case distUri.endsWith('tar.gz'):
+        await tc.extractTar(distPath, pathToUnpack)
+        await io.mv(path.join(pathToUnpack, `dnscontrol`), path.join(pathToInstall, `dnscontrol`))
+        break
+
+      case distUri.endsWith('zip'):
+        await tc.extractZip(distPath, pathToUnpack)
+        await io.mv(path.join(pathToUnpack, `dnscontrol.exe`), path.join(pathToInstall, `dnscontrol.exe`))
+        break
+
+      default:
+        throw new Error('Unsupported distributive format')
+    }
+
+    await io.rmRF(distPath)
 
     try {
       await cache.saveCache([pathToInstall], cacheKey)
@@ -123,11 +135,16 @@ async function getLatestDNSControlVersion(githubAuthToken) {
  * @throws
  */
 function getDNSControlURI(platform, arch, version) {
+  const baseUrl = 'https://github.com/StackExchange/dnscontrol/releases/download'
+
   switch (platform) {
     case 'linux': {
       switch (arch) {
         case 'x64': // Amd64
-          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol-Linux`
+          return `${baseUrl}/v${version}/dnscontrol_${version}_linux_amd64.tar.gz`
+
+        case 'arm64':
+          return `${baseUrl}/v${version}/dnscontrol_${version}_linux_arm64.tar.gz`
       }
 
       throw new Error('Unsupported linux architecture')
@@ -135,11 +152,25 @@ function getDNSControlURI(platform, arch, version) {
 
     case 'darwin': {
       switch (arch) {
-        case 'x64':
-          return `https://github.com/StackExchange/dnscontrol/releases/download/v${version}/dnscontrol-Darwin`
+        case 'x64': // Amd64
+        case 'arm':
+        case 'arm64':
+          return `${baseUrl}/v${version}/dnscontrol_${version}_darwin_all.tar.gz`
       }
 
       throw new Error('Unsupported MacOS architecture')
+    }
+
+    case 'win32': {
+      switch (arch) {
+        case 'x64': // Amd64
+          return `${baseUrl}/v${version}/dnscontrol_${version}_windows_amd64.zip`
+
+        case 'arm64':
+          return `${baseUrl}/v${version}/dnscontrol_${version}_windows_arm64.zip`
+      }
+
+      throw new Error('Unsupported windows architecture')
     }
   }
 
