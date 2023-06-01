@@ -6,7 +6,6 @@ const cache = require('@actions/cache') // docs: https://github.com/actions/tool
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
 const path = require('path')
 const os = require('os')
-const fs = require('fs/promises')
 
 // read action inputs
 const input = {
@@ -65,19 +64,19 @@ async function doInstall(version) {
     switch (true) {
       case distUri.endsWith('tar.gz'):
         await tc.extractTar(distPath, pathToUnpack)
-        await io.rmRF(distPath)
-        await io.mv(path.join(pathToUnpack, `dnscontrol`), pathToInstall)
+        await io.mv(path.join(pathToUnpack, `dnscontrol`), path.join(pathToInstall, `dnscontrol`))
         break
 
       case distUri.endsWith('zip'):
         await tc.extractZip(distPath, pathToUnpack)
-        await io.rmRF(distPath)
-        await io.mv(path.join(pathToUnpack, `dnscontrol.exe`), pathToInstall)
+        await io.mv(path.join(pathToUnpack, `dnscontrol.exe`), path.join(pathToInstall, `dnscontrol.exe`))
         break
 
       default:
         throw new Error('Unsupported distributive format')
     }
+
+    await io.rmRF(distPath)
 
     try {
       await cache.saveCache([pathToInstall], cacheKey)
