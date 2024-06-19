@@ -40,7 +40,7 @@ The following inputs can be used as `step.with` keys:
 
 | Name             |   Type   | Description                        |
 |------------------|:--------:|------------------------------------|
-| `dnscontrol-bin` | `string` | Path to the dnscontrol binary file |
+| `dnscontrol-bin` | `string` | Path to the DNSControl binary file |
 
 ## Releasing
 
