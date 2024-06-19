@@ -9,7 +9,7 @@ const os = require('os')
 
 // read action inputs
 const input = {
-  version: core.getInput('version', {required: true}).replace(/^v/, ''), // strip the 'v' prefix
+  version: core.getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
   githubToken: core.getInput('github-token'),
 }
 
@@ -19,7 +19,8 @@ async function runAction() {
 
   if (input.version.toLowerCase() === 'latest') {
     core.debug('Requesting latest DNSControl version...')
-    version = await getLatestDNSControlVersion(input.githubToken)
+    version = await getLatestVersion(input.githubToken)
+    core.debug(`Latest version: ${version}`)
   } else {
     version = input.version
   }
@@ -38,7 +39,7 @@ async function runAction() {
  *
  * @returns {Promise<void>}
  *
- * @throws
+ * @throws {Error}
  */
 async function doInstall(version) {
   const pathToInstall = path.join(os.tmpdir(), `dnscontrol-${version}`)
@@ -46,6 +47,7 @@ async function doInstall(version) {
 
   core.info(`Version to install: ${version} (target directory: ${pathToInstall})`)
 
+  /** @type {string|undefined} */
   let restoredFromCache = undefined
 
   try {
@@ -54,10 +56,10 @@ async function doInstall(version) {
     core.warning(e)
   }
 
-  if (restoredFromCache !== undefined) { // cache HIT
+  if (restoredFromCache) { // cache HIT
     core.info(`👌 DNSControl restored from cache`)
   } else { // cache MISS
-    const distUri = getDNSControlURI(process.platform, process.arch, version)
+    const distUri = getDistUrl(process.platform, process.arch, version)
     const distPath = await tc.downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `dnscontrol.tmp`)
 
@@ -91,27 +93,27 @@ async function doInstall(version) {
 /**
  * @returns {Promise<void>}
  *
- * @throws
+ * @throws {Error} If binary file not found in $PATH or version check failed
  */
 async function doCheck() {
-  const dnscontrolBinPath = await io.which('dnscontrol', true)
+  const binPath = await io.which('dnscontrol', true)
 
-  if (dnscontrolBinPath === "") {
+  if (binPath === '') {
     throw new Error('dnscontrol binary file not found in $PATH')
   }
 
   await exec.exec('dnscontrol', ['version'], {silent: true})
 
-  core.setOutput('dnscontrol-bin', dnscontrolBinPath)
-
-  core.info(`DNSControl installed: ${dnscontrolBinPath}`)
+  core.setOutput('dnscontrol-bin', binPath)
+  core.info(`DNSControl installed: ${binPath}`)
 }
 
 /**
  * @param {string} githubAuthToken
  * @returns {Promise<string>}
  */
-async function getLatestDNSControlVersion(githubAuthToken) {
+async function getLatestVersion(githubAuthToken) {
+  /** @type {import('@actions/github')} */
   const octokit = github.getOctokit(githubAuthToken)
 
   // docs: https://octokit.github.io/rest.js/v18#repos-get-latest-release
@@ -120,7 +122,7 @@ async function getLatestDNSControlVersion(githubAuthToken) {
     repo: 'dnscontrol',
   })
 
-  return latest.data.tag_name.replace(/^v/, '') // strip the 'v' prefix
+  return latest.data.tag_name.replace(/^[vV]/, '') // strip the 'v' prefix
 }
 
 /**
@@ -132,45 +134,44 @@ async function getLatestDNSControlVersion(githubAuthToken) {
  *
  * @returns {string}
  *
- * @throws
+ * @throws {Error} Unsupported platform or architecture
  */
-function getDNSControlURI(platform, arch, version) {
-  const baseUrl = 'https://github.com/StackExchange/dnscontrol/releases/download'
+function getDistUrl(platform, arch, version) {
+  const baseUrl = `https://github.com/StackExchange/dnscontrol/releases/download/v${version}`
 
   switch (platform) {
     case 'linux': {
       switch (arch) {
         case 'x64': // Amd64
-          return `${baseUrl}/v${version}/dnscontrol_${version}_linux_amd64.tar.gz`
+          return `${baseUrl}/dnscontrol_${version}_linux_amd64.tar.gz`
 
         case 'arm64':
-          return `${baseUrl}/v${version}/dnscontrol_${version}_linux_arm64.tar.gz`
+          return `${baseUrl}/dnscontrol_${version}_linux_arm64.tar.gz`
       }
 
-      throw new Error('Unsupported linux architecture')
+      throw new Error(`Unsupported linux architecture (${arch})`)
     }
 
     case 'darwin': {
       switch (arch) {
         case 'x64': // Amd64
-        case 'arm':
         case 'arm64':
-          return `${baseUrl}/v${version}/dnscontrol_${version}_darwin_all.tar.gz`
+          return `${baseUrl}/dnscontrol_${version}_darwin_all.tar.gz`
       }
 
-      throw new Error('Unsupported MacOS architecture')
+      throw new Error(`Unsupported macOS architecture (${arch})`)
     }
 
     case 'win32': {
       switch (arch) {
         case 'x64': // Amd64
-          return `${baseUrl}/v${version}/dnscontrol_${version}_windows_amd64.zip`
+          return `${baseUrl}/dnscontrol_${version}_windows_amd64.zip`
 
         case 'arm64':
-          return `${baseUrl}/v${version}/dnscontrol_${version}_windows_arm64.zip`
+          return `${baseUrl}/dnscontrol_${version}_windows_arm64.zip`
       }
 
-      throw new Error('Unsupported windows architecture')
+      throw new Error(`Unsupported platform (${platform})`)
     }
   }
 
