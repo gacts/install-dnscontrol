@@ -9,10 +9,6 @@ inputs:
     description: DNSControl version
     required: true
     default: latest
-  github-token:
-    description: GitHub auth token. Since there's a default, this is typically not supplied by the user
-    required: false
-    default: ${{ github.token }}
 
 outputs:
   dnscontrol-bin:

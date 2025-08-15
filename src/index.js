@@ -1,16 +1,15 @@
 const core = require('@actions/core') // docs: https://github.com/actions/toolkit/tree/main/packages/core
 const tc = require('@actions/tool-cache') // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
-const github = require('@actions/github') // docs: https://github.com/actions/toolkit/tree/main/packages/github
 const io = require('@actions/io') // docs: https://github.com/actions/toolkit/tree/main/packages/io
 const cache = require('@actions/cache') // docs: https://github.com/actions/toolkit/tree/main/packages/cache
 const exec = require('@actions/exec') // docs: https://github.com/actions/toolkit/tree/main/packages/exec
 const path = require('path')
 const os = require('os')
+const http = require('@actions/http-client') // https://github.com/actions/toolkit/tree/main/packages/http-client
 
 // read action inputs
 const input = {
   version: core.getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
-  githubToken: core.getInput('github-token'),
 }
 
 // main action entrypoint
@@ -19,7 +18,7 @@ async function runAction() {
 
   if (input.version.toLowerCase() === 'latest') {
     core.debug('Requesting latest DNSControl version...')
-    version = await getLatestVersion(input.githubToken)
+    version = await getLatestVersion()
     core.debug(`Latest version: ${version}`)
   } else {
     version = input.version
@@ -112,17 +111,27 @@ async function doCheck() {
  * @param {string} githubAuthToken
  * @returns {Promise<string>}
  */
-async function getLatestVersion(githubAuthToken) {
-  /** @type {import('@actions/github')} */
-  const octokit = github.getOctokit(githubAuthToken)
+async function getLatestVersion() {
+  // use the "magic" GitHub link to get the latest release tag (it returns a 302 redirect with the tag in
+  // the location header). this "hack" allows us to avoid the GitHub API rate limits
+  const resp = await new http.HttpClient('gacts/install-dnscontrol', undefined, {
+    allowRedirects: false,
+  }).get('https://github.com/StackExchange/dnscontrol/releases/latest')
 
-  // docs: https://octokit.github.io/rest.js/v18#repos-get-latest-release
-  const latest = await octokit.rest.repos.getLatestRelease({
-    owner: 'StackExchange',
-    repo: 'dnscontrol',
-  })
+  if (resp.message.statusCode !== 302) {
+    throw new Error(`Failed to fetch latest version: ${resp.message.statusCode} ${resp.message.statusMessage}`)
+  }
 
-  return latest.data.tag_name.replace(/^[vV]/, '') // strip the 'v' prefix
+  const location = resp.message.headers.location.replace(/^https?:\/\//, '')
+  const parts = location.split('/')
+
+  if (parts.length < 6) {
+    throw new Error(`Invalid redirect URL: ${location}`)
+  }
+
+  const tag = parts[5]
+
+  return tag.replace(/^[vV]/, '') // strip the 'v' prefix
 }
 
 /**

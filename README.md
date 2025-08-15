@@ -31,10 +31,9 @@ jobs:
 
 The following inputs can be used as `step.with` keys:
 
-| Name           |   Type   |        Default        | Required | Description                                                      |
-|----------------|:--------:|:---------------------:|:--------:|------------------------------------------------------------------|
-| `version`      | `string` |       `latest`        |    no    | DNSControl version to install                                    |
-| `github-token` | `string` | `${{ github.token }}` |    no    | GitHub token (for requesting the latest DNSControl version info) |
+| Name      |   Type   | Default  | Required | Description                   |
+|-----------|:--------:|:--------:|:--------:|-------------------------------|
+| `version` | `string` | `latest` |    no    | DNSControl version to install |
 
 ### Outputs
 
