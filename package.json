@@ -3,7 +3,7 @@
   "description": "Installs DNSControl file into your actions workflow",
   "main": "src/index.js",
   "scripts": {
-    "lint": "eslint --config package.json './src/**/*.js'",
+    "lint": "eslint './src/**/*.js'",
     "build": "ncc build src/index.js -o dist --minify --no-cache"
   },
   "repository": {
@@ -16,6 +16,7 @@
     "DNSControl"
   ],
   "author": "",
+  "type": "module",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/gacts/install-dnscontrol/issues"
@@ -23,26 +24,17 @@
   "homepage": "https://github.com/gacts/install-dnscontrol#readme",
   "dependencies": {
     "@actions/cache": "^4.1.0",
-    "@actions/core": "^1.10.1",
+    "@actions/core": "^1.11.1",
     "@actions/exec": "^1.1.1",
     "@actions/http-client": "^3.0.0",
     "@actions/io": "^2.0.0",
     "@actions/tool-cache": "^2.0.2"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.39.0",
     "@vercel/ncc": "^0.38.4",
-    "eslint": "^8.57.1"
-  },
-  "eslintConfig": {
-    "env": {
-      "commonjs": true,
-      "es6": true,
-      "node": true
-    },
-    "extends": "eslint:recommended",
-    "parserOptions": {
-      "ecmaVersion": 2018
-    },
-    "rules": {}
+    "eslint": "^9.39.0",
+    "globals": "^16.5.0"
   }
 }
