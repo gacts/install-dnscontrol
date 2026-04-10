@@ -1,15 +1,15 @@
-import core from '@actions/core' // docs: https://github.com/actions/toolkit/tree/main/packages/core
-import tc from '@actions/tool-cache' // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
-import io from '@actions/io' // docs: https://github.com/actions/toolkit/tree/main/packages/io
-import cache from '@actions/cache' // docs: https://github.com/actions/toolkit/tree/main/packages/cache
-import exec from '@actions/exec' // docs: https://github.com/actions/toolkit/tree/main/packages/exec
+import {getInput, debug, info, warning, startGroup, endGroup, addPath, setOutput, setFailed} from '@actions/core' // docs: https://github.com/actions/toolkit/tree/main/packages/core
+import {downloadTool, extractTar, extractZip} from '@actions/tool-cache' // docs: https://github.com/actions/toolkit/tree/main/packages/tool-cache
+import {mv, rmRF, which} from '@actions/io' // docs: https://github.com/actions/toolkit/tree/main/packages/io
+import {restoreCache, saveCache} from '@actions/cache' // docs: https://github.com/actions/toolkit/tree/main/packages/cache
+import {exec} from '@actions/exec' // docs: https://github.com/actions/toolkit/tree/main/packages/exec
 import path from 'path'
 import os from 'os'
-import http from '@actions/http-client' // https://github.com/actions/toolkit/tree/main/packages/http-client
+import {HttpClient} from '@actions/http-client' // https://github.com/actions/toolkit/tree/main/packages/http-client
 
 // read action inputs
 const input = {
-  version: core.getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
+  version: getInput('version', {required: true}).replace(/^[vV]/, ''), // strip the 'v' prefix
 }
 
 // main action entrypoint
@@ -17,20 +17,20 @@ async function runAction() {
   let version
 
   if (input.version.toLowerCase() === 'latest') {
-    core.debug('Requesting latest DNSControl version...')
+    debug('Requesting latest DNSControl version...')
     version = await getLatestVersion()
-    core.debug(`Latest version: ${version}`)
+    debug(`Latest version: ${version}`)
   } else {
     version = input.version
   }
 
-  core.startGroup('💾 Install DNSControl')
+  startGroup('💾 Install DNSControl')
   await doInstall(version)
-  core.endGroup()
+  endGroup()
 
-  core.startGroup('🧪 Installation check')
+  startGroup('🧪 Installation check')
   await doCheck()
-  core.endGroup()
+  endGroup()
 }
 
 /**
@@ -44,49 +44,49 @@ async function doInstall(version) {
   const pathToInstall = path.join(os.tmpdir(), `dnscontrol-${version}`)
   const cacheKey = `dnscontrol-cache-${version}-${process.platform}-${process.arch}`
 
-  core.info(`Version to install: ${version} (target directory: ${pathToInstall})`)
+  info(`Version to install: ${version} (target directory: ${pathToInstall})`)
 
   /** @type {string|undefined} */
   let restoredFromCache = undefined
 
   try {
-    restoredFromCache = await cache.restoreCache([pathToInstall], cacheKey)
+    restoredFromCache = await restoreCache([pathToInstall], cacheKey)
   } catch (e) {
-    core.warning(e)
+    warning(e)
   }
 
   if (restoredFromCache) { // cache HIT
-    core.info(`👌 DNSControl restored from cache`)
+    info(`👌 DNSControl restored from cache`)
   } else { // cache MISS
     const distUri = getDistUrl(process.platform, process.arch, version)
-    const distPath = await tc.downloadTool(distUri)
+    const distPath = await downloadTool(distUri)
     const pathToUnpack = path.join(os.tmpdir(), `dnscontrol.tmp`)
 
     switch (true) {
       case distUri.endsWith('tar.gz'):
-        await tc.extractTar(distPath, pathToUnpack)
-        await io.mv(path.join(pathToUnpack, `dnscontrol`), path.join(pathToInstall, `dnscontrol`))
+        await extractTar(distPath, pathToUnpack)
+        await mv(path.join(pathToUnpack, `dnscontrol`), path.join(pathToInstall, `dnscontrol`))
         break
 
       case distUri.endsWith('zip'):
-        await tc.extractZip(distPath, pathToUnpack)
-        await io.mv(path.join(pathToUnpack, `dnscontrol.exe`), path.join(pathToInstall, `dnscontrol.exe`))
+        await extractZip(distPath, pathToUnpack)
+        await mv(path.join(pathToUnpack, `dnscontrol.exe`), path.join(pathToInstall, `dnscontrol.exe`))
         break
 
       default:
         throw new Error('Unsupported distributive format')
     }
 
-    await io.rmRF(distPath)
+    await rmRF(distPath)
 
     try {
-      await cache.saveCache([pathToInstall], cacheKey)
+      await saveCache([pathToInstall], cacheKey)
     } catch (e) {
-      core.warning(e)
+      warning(e)
     }
   }
 
-  core.addPath(pathToInstall)
+  addPath(pathToInstall)
 }
 
 /**
@@ -95,16 +95,16 @@ async function doInstall(version) {
  * @throws {Error} If binary file not found in $PATH or version check failed
  */
 async function doCheck() {
-  const binPath = await io.which('dnscontrol', true)
+  const binPath = await which('dnscontrol', true)
 
   if (binPath === '') {
     throw new Error('dnscontrol binary file not found in $PATH')
   }
 
-  await exec.exec('dnscontrol', ['version'], {silent: true})
+  await exec('dnscontrol', ['version'], {silent: true})
 
-  core.setOutput('dnscontrol-bin', binPath)
-  core.info(`DNSControl installed: ${binPath}`)
+  setOutput('dnscontrol-bin', binPath)
+  info(`DNSControl installed: ${binPath}`)
 }
 
 /**
@@ -114,7 +114,7 @@ async function doCheck() {
 async function getLatestVersion() {
   // use the "magic" GitHub link to get the latest release tag (it returns a 302 redirect with the tag in
   // the location header). this "hack" allows us to avoid the GitHub API rate limits
-  const resp = await new http.HttpClient('gacts/install-dnscontrol', undefined, {
+  const resp = await new HttpClient('gacts/install-dnscontrol', undefined, {
     allowRedirects: false,
   }).get('https://github.com/StackExchange/dnscontrol/releases/latest')
 
@@ -191,5 +191,5 @@ function getDistUrl(platform, arch, version) {
 (async () => {
   await runAction()
 })().catch(error => {
-  core.setFailed(error.message)
+  setFailed(error.message)
 })
