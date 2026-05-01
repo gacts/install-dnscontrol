@@ -108,25 +108,24 @@ async function doCheck() {
 }
 
 /**
- * @param {string} githubAuthToken
  * @returns {Promise<string>}
  */
 async function getLatestVersion() {
-  // use the "magic" GitHub link to get the latest release tag (it returns a 302 redirect with the tag in
-  // the location header). this "hack" allows us to avoid the GitHub API rate limits
-  const resp = await new HttpClient('gacts/install-dnscontrol', undefined, {
-    allowRedirects: false,
-  }).get('https://github.com/StackExchange/dnscontrol/releases/latest')
+  // use the "magic" GitHub link to get the latest release tag - GitHub redirects to the tag URL
+  // (e.g. /itstoragesvc/dnscontrol/releases/tag/vX.Y.Z), allowing us to avoid the GitHub API rate limits
+  const resp = await new HttpClient('gacts/install-dnscontrol').get(
+    'https://github.com/itstoragesvc/dnscontrol/releases/latest'
+  )
 
-  if (resp.message.statusCode !== 302) {
+  if (resp.message.statusCode !== 200) {
     throw new Error(`Failed to fetch latest version: ${resp.message.statusCode} ${resp.message.statusMessage}`)
   }
 
-  const location = resp.message.headers.location.replace(/^https?:\/\//, '')
-  const parts = location.split('/')
+  // final path after redirects: /itstoragesvc/dnscontrol/releases/tag/vX.Y.Z
+  const parts = resp.message.req.path.split('/')
 
   if (parts.length < 6) {
-    throw new Error(`Invalid redirect URL: ${location}`)
+    throw new Error(`Unexpected final URL path: ${resp.message.req.path}`)
   }
 
   const tag = parts[5]
@@ -135,7 +134,7 @@ async function getLatestVersion() {
 }
 
 /**
- * @link https://github.com/StackExchange/dnscontrol/releases
+ * @link https://github.com/itstoragesvc/dnscontrol/releases
  *
  * @param {('linux'|'darwin'|'win32')} platform
  * @param {('x32'|'x64'|'arm'|'arm64')} arch
@@ -146,7 +145,7 @@ async function getLatestVersion() {
  * @throws {Error} Unsupported platform or architecture
  */
 function getDistUrl(platform, arch, version) {
-  const baseUrl = `https://github.com/StackExchange/dnscontrol/releases/download/v${version}`
+  const baseUrl = `https://github.com/itstoragesvc/dnscontrol/releases/download/v${version}`
 
   switch (platform) {
     case 'linux': {

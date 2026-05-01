@@ -7,7 +7,7 @@
 This action installs [DNSControl][dnscontrol] as a binary file into your workflow. It can be run on **Linux**
 (`ubuntu-latest`), **macOS** (`macos-latest`) or **windows** (`windows-latest`).
 
-- 🚀 DNSControl releases page: <https://github.com/StackExchange/dnscontrol/releases>
+- 🚀 DNSControl releases page: <https://github.com/itstoragesvc/dnscontrol/releases>
 
 Additionally, this action uses the GitHub **caching mechanism** to speed up your workflow execution time!
 
@@ -79,4 +79,4 @@ This is open-source software licensed under the [MIT License][link_license].
 [link_create_issue]:https://github.com/gacts/install-dnscontrol/issues/new
 [link_pulls]:https://github.com/gacts/install-dnscontrol/pulls
 
-[dnscontrol]:https://github.com/StackExchange/dnscontrol
+[dnscontrol]:https://github.com/itstoragesvc/dnscontrol
