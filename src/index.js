@@ -116,7 +116,7 @@ async function getLatestVersion() {
   // the location header). this "hack" allows us to avoid the GitHub API rate limits
   const resp = await new HttpClient('gacts/install-dnscontrol', undefined, {
     allowRedirects: false,
-  }).get('https://github.com/StackExchange/dnscontrol/releases/latest')
+  }).get('https://github.com/itstoragesvc/dnscontrol/releases/latest')
 
   if (resp.message.statusCode !== 302) {
     throw new Error(`Failed to fetch latest version: ${resp.message.statusCode} ${resp.message.statusMessage}`)
@@ -135,7 +135,7 @@ async function getLatestVersion() {
 }
 
 /**
- * @link https://github.com/StackExchange/dnscontrol/releases
+ * @link https://github.com/itstoragesvc/dnscontrol/releases
  *
  * @param {('linux'|'darwin'|'win32')} platform
  * @param {('x32'|'x64'|'arm'|'arm64')} arch
@@ -146,7 +146,7 @@ async function getLatestVersion() {
  * @throws {Error} Unsupported platform or architecture
  */
 function getDistUrl(platform, arch, version) {
-  const baseUrl = `https://github.com/StackExchange/dnscontrol/releases/download/v${version}`
+  const baseUrl = `https://github.com/itstoragesvc/dnscontrol/releases/download/v${version}`
 
   switch (platform) {
     case 'linux': {
