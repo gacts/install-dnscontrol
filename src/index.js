@@ -113,7 +113,7 @@ async function doCheck() {
 async function getLatestVersion() {
   // use the "magic" GitHub link to get the latest release tag - GitHub redirects to the tag URL
   // (e.g. /itstoragesvc/dnscontrol/releases/tag/vX.Y.Z), allowing us to avoid the GitHub API rate limits
-  const resp = await new HttpClient('gacts/install-dnscontrol').get(
+  const resp = await new HttpClient('gacts/install-dnscontrol').head(
     'https://github.com/itstoragesvc/dnscontrol/releases/latest'
   )
 
